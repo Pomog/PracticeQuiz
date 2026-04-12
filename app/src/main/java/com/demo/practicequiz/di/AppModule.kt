@@ -1,6 +1,7 @@
 package com.demo.practicequiz.di
 
 import com.demo.practicequiz.network.QuestionsAPI
+import com.demo.practicequiz.repo.QuestionRepository
 import com.demo.practicequiz.util.Constants
 import dagger.Module
 import dagger.Provides
@@ -13,6 +14,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+    @Singleton
+    @Provides
+    fun provideQuestionRepo(api: QuestionsAPI) = QuestionRepository(api)
+
     @Singleton
     @Provides
     fun provideQuestionsAPI(): QuestionsAPI {
