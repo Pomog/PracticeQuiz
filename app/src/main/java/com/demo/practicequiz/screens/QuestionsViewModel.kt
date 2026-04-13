@@ -15,7 +15,7 @@ import javax.inject.Inject
 class QuestionsViewModel @Inject constructor(
     private val repo: QuestionRepository
 ): ViewModel(){
-    private val data: MutableState<DataOrException<ArrayList<QuestionItem>,
+    val data: MutableState<DataOrException<ArrayList<QuestionItem>,
             Boolean, Exception>> = mutableStateOf(DataOrException(
         null,true,
         Exception("")))
