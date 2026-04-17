@@ -4,7 +4,7 @@ import android.util.Log
 import com.demo.practicequiz.data.DataOrException
 import com.demo.practicequiz.model.QuestionItem
 import com.demo.practicequiz.network.QuestionsAPI
-import jakarta.inject.Inject
+import javax.inject.Inject
 
 class QuestionRepository @Inject constructor(
     private val api: QuestionsAPI

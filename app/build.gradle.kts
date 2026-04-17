@@ -59,7 +59,6 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
     implementation("androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0")
 
     implementation(libs.kotlinx.coroutines.core)
