@@ -12,12 +12,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -44,13 +48,27 @@ fun Questions(
 ) {
     val state = viewModel.data.value
     val questions = state.data
+    val questionIndex = remember { mutableIntStateOf(0) }
 
     if (viewModel.data.value.loading == true) {
         CircularProgressIndicator()
         Log.d("Loading", "Questions are loading...")
     } else {
+
+        val question = try {
+            questions?.get(questionIndex.intValue)
+        } catch (ex: Exception) {
+            null
+            Log.d("Error", "Questions: ${ex.localizedMessage}")
+        }
+
         if (questions != null) {
-            QuestionDisplay(question = questions.first())
+            QuestionDisplay(question = question!! as QuestionItem,
+                questionIndex = questionIndex,
+                viewModel = viewModel
+            ) {
+                questionIndex.intValue = questionIndex.intValue + 1
+            }
         }
         Log.d("SIZE", "size = ${questions?.size}")
     }
@@ -60,15 +78,14 @@ fun Questions(
 @Composable
 fun QuestionDisplay(
     question: QuestionItem,
-    //questionIndex: MutableIntState,
-    //viewModel: QuestionsViewModel,
+    questionIndex: MutableIntState,
+    viewModel: QuestionsViewModel,
     onNextClicked: (Int) -> Unit = {}
 ) {
     val pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 15f), 0f)
     Surface(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(4.dp),
+            .fillMaxSize(),
         color = AppColors.mDarkPurple
     ) {
         val choicesState = remember(question) {
@@ -107,8 +124,15 @@ fun QuestionDisplay(
                 )
 
                 choicesState.forEachIndexed { index, answerText ->
+
+                    val isSelected = answerState.value == index
+                    val isCorrectSelected = isSelected && correctAnswerState.value == true
+                    val isWrongSelected = isSelected && correctAnswerState.value == false
+
+
                     Row(
                         modifier = Modifier
+                            .fillMaxWidth()
                             .padding(3.dp)
                             .height(45.dp)
                             .border(
@@ -133,25 +157,59 @@ fun QuestionDisplay(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = (answerState.value == index),
+                            selected = isSelected,
                             onClick = {
                                 updateAnswer(index)
                             },
                             modifier = Modifier.padding(start = 16.dp),
-                            colors = RadioButtonDefaults
-                                .colors(
-                                    selectedColor = if (
-                                        correctAnswerState.value == true
-                                        && index == answerState.value
-                                    ) {
-                                        Color.Green.copy(alpha = 0.2f)
-                                    } else {
-                                        Color.Red.copy(alpha = 0.2f)
-                                    }
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = when {
+                                    isCorrectSelected -> Color.Yellow
+                                    isWrongSelected -> Color.Blue
+                                    else -> AppColors.mLightBlue
+                                },
+                                unselectedColor = AppColors.mLightGray,
+                                disabledSelectedColor = AppColors.mLightGray,
+                                disabledUnselectedColor = AppColors.mLightGray
+                            )
+                        )
+                        val annotatedString = buildAnnotatedString {
+                            withStyle(
+                                style = SpanStyle(
+                                    fontWeight = FontWeight.Light,
+                                    color = when {
+                                        isCorrectSelected -> Color.Yellow
+                                        isWrongSelected -> Color.Blue
+                                        else -> AppColors.mOffWhite
+                                    },
+                                    fontSize = 17.sp
                                 )
-                        ) // end RadioButton
-                        Text(text = answerText)
+                            ) {
+                                append(answerText)
+                            }
+                        }
+                        Text(
+                            text = annotatedString,
+                            modifier = Modifier.padding(6.dp)
+                        )
                     }
+                }
+                Button(
+                    onClick = { onNextClicked(questionIndex.intValue) },
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.CenterHorizontally),
+                    shape = RoundedCornerShape(34),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AppColors.mLightBlue
+                    )
+                ) {
+                    Text(
+                        text = "Next",
+                        modifier = Modifier.padding(4.dp),
+                        color = AppColors.mOffWhite,
+                        fontSize = 17.sp
+                    )
                 }
             }
         }
@@ -159,53 +217,51 @@ fun QuestionDisplay(
 }
 
 
+@Composable
+fun DrawDottedLine(pathEffect: androidx.compose.ui.graphics.PathEffect) {
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(1.dp),
+    ) {
+        drawLine(
+            color = AppColors.mLightGray,
+            start = androidx.compose.ui.geometry.Offset(0f, 0f),
+            end = androidx.compose.ui.geometry.Offset(size.width, 0f),
+            pathEffect = pathEffect
+        )
 
-
-    @Composable
-    fun DrawDottedLine(pathEffect: androidx.compose.ui.graphics.PathEffect) {
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp),
-        ) {
-            drawLine(
-                color = AppColors.mLightGray,
-                start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                end = androidx.compose.ui.geometry.Offset(size.width, 0f),
-                pathEffect = pathEffect
-            )
-
-
-        }
 
     }
 
+}
 
-    @Composable
-    fun QuestionTracker(counter: Int = 10, outOf: Int = 100) {
-        Text(
-            text = buildAnnotatedString {
-                withStyle(style = ParagraphStyle(textIndent = TextIndent.None)) {
+
+@Composable
+fun QuestionTracker(counter: Int = 10, outOf: Int = 100) {
+    Text(
+        text = buildAnnotatedString {
+            withStyle(style = ParagraphStyle(textIndent = TextIndent.None)) {
+                withStyle(
+                    style = SpanStyle(
+                        color = AppColors.mLightGray,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 27.sp
+                    )
+                ) {
+                    append("Question $counter/")
                     withStyle(
                         style = SpanStyle(
                             color = AppColors.mLightGray,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 27.sp
+                            fontWeight = FontWeight.Light,
+                            fontSize = 14.sp
                         )
                     ) {
-                        append("Question $counter/")
-                        withStyle(
-                            style = SpanStyle(
-                                color = AppColors.mLightGray,
-                                fontWeight = FontWeight.Light,
-                                fontSize = 14.sp
-                            )
-                        ) {
-                            append("$outOf")
-                        }
+                        append("$outOf")
                     }
                 }
-            },
-            modifier = Modifier.padding(20.dp)
-        )
-    }
+            }
+        },
+        modifier = Modifier.padding(20.dp)
+    )
+}
