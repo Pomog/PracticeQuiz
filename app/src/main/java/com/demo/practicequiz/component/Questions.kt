@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,6 +37,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.demo.practicequiz.model.QuestionItem
@@ -63,7 +65,8 @@ fun Questions(
         }
 
         if (questions != null) {
-            QuestionDisplay(question = question!! as QuestionItem,
+            QuestionDisplay(
+                question = question!! as QuestionItem,
                 questionIndex = questionIndex,
                 viewModel = viewModel
             ) {
@@ -264,4 +267,60 @@ fun QuestionTracker(counter: Int = 10, outOf: Int = 100) {
         },
         modifier = Modifier.padding(20.dp)
     )
+}
+
+@Preview
+@Composable
+fun ShowProgress(score: Int = 12, total: Int = 100) {
+    val progress = (score.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+    val gradient = Brush.linearGradient(
+        listOf(
+            AppColors.mLightPurple,
+            AppColors.mOffDarkPurple
+        )
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(3.dp)
+            .height(45.dp)
+            .border(
+                width = 4.dp, brush = Brush.linearGradient(
+                    colors = listOf(
+                        AppColors.mLightPurple,
+                        AppColors.mLightPurple
+                    )
+                ),
+                shape = RoundedCornerShape(34)
+            )
+            .clip(
+                RoundedCornerShape(
+                    topStartPercent = 50,
+                    topEndPercent = 50,
+                    bottomStartPercent = 50,
+                    bottomEndPercent = 50
+                )
+            )
+            .background(Color.Transparent),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Button(
+            contentPadding = PaddingValues(1.dp),
+            onClick = { /*TODO*/ },
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(brush = gradient),
+            enabled = false,
+            elevation = null,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent
+            )
+        ) {
+
+        }
+
+
+    }
 }
